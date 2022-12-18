@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Ransomware detection system</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/7.14.1-0/firebase.js"></script>
+  <script src="./mail.js"></script>
+</head>
+<script type="text/javascript">
+  async function handleData() {
+    var thefile = document.getElementById('inputFile');
+    var base64 = await convertFileToBase64(thefile.files[0]);
+    const textAsBuffer = new TextEncoder().encode(base64);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', textAsBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const digest = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    console.log("shavalue", digest);
+    axios({
+      method: 'post',
+      url: 'http://localhost:8000/detect',
+      data: {
+        file_uploaded: digest,
+      },
+    })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => { throw err });
+  }
+
+  function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+  }
+</script>
+
+<body>
+  <h1>Ransomware Detection System</h1>
+  <h2>Select the file you want to scan</h2>
+  <form class="for" id="fileupload">
+    <input class="btn" type="file" id="inputFile" onchange="handleData()" />
+    <!-- <a id="downloadLink"><button class="btn" type="button">Upload</button> -->
+    </a>
+    <button class="btn" type="button" onclick="handleData()" value="data">Start Scanning..</button>
+  </form>
+</body>
+
+</html>
